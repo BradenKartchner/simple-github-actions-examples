@@ -10,7 +10,6 @@ jobs:
   deploy_preview:
     if: github.actor != 'dependabot[bot]'
     name: Deploy Preview
-    needs: setup
     runs-on: ubuntu-latest
     steps:
 
