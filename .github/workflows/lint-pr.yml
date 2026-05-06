@@ -1,0 +1,31 @@
+name: Lint Code Base
+
+# Trigger the workflow on pull requests
+on:
+  pull_request:
+    types: [ opened, synchronize ]
+
+jobs:
+  lint:
+    name: Run Linter
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Check out the code from the PR branch
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 2. Set up the environment (e.g., Node.js)
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm' # Speeds up subsequent runs by caching dependencies
+
+      # 3. Install dependencies
+      - name: Install Dependencies
+        run: npm ci
+
+      # 4. Run the lint command defined in your package.json
+      - name: Run Linter
+        run: npm run lint
