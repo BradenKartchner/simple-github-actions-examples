@@ -32,7 +32,7 @@ jobs:
           echo "PREVIEW_URL=$DEPLOY_OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Comment PR with Preview Link
-        if: github.event.action == 'opened'
+        # if: github.event.action == 'opened'
         uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
