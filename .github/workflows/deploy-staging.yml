@@ -1,0 +1,68 @@
+name: Deploy Preview
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  deploy_preview:
+    if: github.actor != 'dependabot[bot]'
+    name: Deploy Preview
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+
+      - uses: actions/checkout@v6
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build Project Artifacts
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy Project Artifacts to Vercel
+        id: vercel-deploy
+        run: |
+          DEPLOY_OUTPUT=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }}
+          echo "PREVIEW_URL=$DEPLOY_OUTPUT" >> $GITHUB_OUTPUT
+
+      - name: Comment PR with Preview Link
+        if: github.event.action == 'opened'
+        uses: actions/github-script@v9
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const previewUrl = '${{ steps.vercel-deploy.outputs.PREVIEW_URL }}';
+            console.log('Preview URL:', previewUrl);
+
+            const message = `
+              🚀 **Preview deployment is ready!**
+
+              **Preview:** ${previewUrl}
+            `;
+
+            console.log('PR Context:', {
+              owner: context.repo.owner,
+              repo: context.repo.name,
+              pull_number: context.payload.pull_request.number
+            });
+
+            try {
+              await github.rest.issues.createComment({
+                ...context.repo,
+                issue_number: context.payload.pull_request.number,
+                body: message
+              });
+            } catch (error) {
+              console.error('Failed to create comment:', {
+                status: error.status,
+                message: error.message,
+                url: error.response?.url
+              });
+              throw error;
+            }
