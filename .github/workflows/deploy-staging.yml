@@ -2,6 +2,13 @@ name: Deploy Preview
 env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+# GITHUB_TOKEN defaults are often too narrow to post PR comments; grant issue/PR write explicitly.
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
 on:
   pull_request:
     types: [opened, synchronize, reopened]
@@ -34,7 +41,7 @@ jobs:
         # if: github.event.action == 'opened'
         uses: actions/github-script@v9
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ github.token }}
           script: |
             const previewUrl = '${{ steps.vercel-deploy.outputs.PREVIEW_URL }}';
             console.log('Preview URL:', previewUrl);
@@ -47,7 +54,7 @@ jobs:
 
             console.log('PR Context:', {
               owner: context.repo.owner,
-              repo: context.repo.name,
+              repo: context.repo.repo,
               pull_number: context.payload.pull_request.number
             });
 
